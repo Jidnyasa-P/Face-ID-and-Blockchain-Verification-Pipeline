@@ -1,0 +1,3 @@
+# Local file paths work too, not just URLs
+../demo/candidates/candidate1.jpg, unrelated face - should NOT match
+../demo/candidates/candidate2.jpg, same person as query - should MATCH

@@ -50,14 +50,23 @@ class MatchResult:
     image_bytes: bytes
 
 
-def _download_image(url: str) -> np.ndarray:
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        raw = resp.read()
+def _load_image(source: str):
+    """Load an image either from a local file path or an http(s) URL.
+    A local path lets you run the whole pipeline offline with images you
+    already have (e.g. saved/downloaded posts) instead of needing live
+    URLs during a demo."""
+    if source.startswith("http://") or source.startswith("https://"):
+        req = urllib.request.Request(source, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            raw = resp.read()
+    else:
+        with open(source, "rb") as f:
+            raw = f.read()
+
     arr = np.frombuffer(raw, dtype=np.uint8)
     img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
     if img is None:
-        raise ValueError(f"Could not decode image from {url}")
+        raise ValueError(f"Could not decode image from {source}")
     return img, raw
 
 
@@ -74,7 +83,7 @@ def find_match(
 
     for cand in candidates:
         try:
-            img, raw = _download_image(cand.url)
+            img, raw = _load_image(cand.url)
             face = detect_face(img)
             enc = encode_face(face)
             sim = compare(query_encoding, enc)

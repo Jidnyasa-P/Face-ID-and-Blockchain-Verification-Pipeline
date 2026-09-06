@@ -16,10 +16,14 @@ from anchor import sha256_bytes
 from blockchain import SimpleChain
 
 
-def fetch_bytes(url: str) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        return resp.read()
+def fetch_bytes(source: str) -> bytes:
+    """Read bytes from a local file path or an http(s) URL."""
+    if source.startswith("http://") or source.startswith("https://"):
+        req = urllib.request.Request(source, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return resp.read()
+    with open(source, "rb") as f:
+        return f.read()
 
 
 def verify_block(chain: SimpleChain, block_index: int, current_image_bytes: bytes) -> dict:

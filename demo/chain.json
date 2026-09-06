@@ -1,27 +1,42 @@
 [
   {
     "index": 0,
-    "timestamp": 1788691729.0903323,
+    "timestamp": 1788693961.4957242,
     "data": {
       "note": "genesis block"
     },
     "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
     "nonce": 0,
-    "hash": "08c782570fa13ecf517d722c992242696ef71d6519d50fbe862e4a43612a7b5c"
+    "hash": "5748006f23bb768d9bc861eba52da09d924ef87cacdc12abc58c49819d4ca179"
   },
   {
     "index": 1,
-    "timestamp": 1788691729.0906448,
+    "timestamp": 1788693961.4961674,
     "data": {
       "type": "face_match_verification",
-      "post_url": "https://raw.githubusercontent.com/opencv/opencv/master/samples/data/lena.jpg",
+      "post_url": "../demo/candidates/candidate2.jpg",
       "image_sha256": "7de7ed51a1594fff247f4cae2301eceacf5313d6011e37b4a4c8733f7bb72c07",
       "similarity_score": 1.0,
       "query_image": "../demo/query/query_face.jpg",
-      "anchored_at": 1788691729.0906422
+      "anchored_at": 1788693961.4961646
     },
-    "previous_hash": "08c782570fa13ecf517d722c992242696ef71d6519d50fbe862e4a43612a7b5c",
-    "nonce": 13,
-    "hash": "02ee8511b260fb1ec7ac969e03e1ca203031d4d7e958be1767ee402046ad737c"
+    "previous_hash": "5748006f23bb768d9bc861eba52da09d924ef87cacdc12abc58c49819d4ca179",
+    "nonce": 0,
+    "hash": "0ea035c032c12476981748ec13b46d0594ce0e01691695979ab24125f4c0dec7"
+  },
+  {
+    "index": 2,
+    "timestamp": 1788696321.0108745,
+    "data": {
+      "type": "face_match_verification",
+      "post_url": "https://www.wired.com/story/finding-lena-the-patron-saint-of-jpegs/",
+      "image_sha256": "f1ccce1976c5b2f8c2f6453fcbf3ce5f9774e4bae3e5ba840709edd0f26f7070",
+      "similarity_score": 0.4433,
+      "query_image": "../demo/query/query_face.jpg",
+      "anchored_at": 1788696321.010865
+    },
+    "previous_hash": "0ea035c032c12476981748ec13b46d0594ce0e01691695979ab24125f4c0dec7",
+    "nonce": 5,
+    "hash": "0fe8263b4b6d7d831ff1c68460394d4aa1eb42c480e7aa047c81bc6e9e3306a1"
   }
 ]

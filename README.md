@@ -77,7 +77,38 @@ wired in by default since it needs an RPC endpoint and funded testnet
 wallet; both modules expose the same `add_block(data)` interface so
 swapping one for the other in `pipeline.py` is a one-line change.
 
-## Setup
+## Two ways to run this
+
+### Option A (recommended): real live web search — `pipeline_web.py`
+
+Uses **SerpApi's Google Lens engine** to genuinely search the live web and
+find real pages/posts containing a visually matching image. Every result
+is then re-checked by our own face encoder before anything is anchored,
+since Google Lens matches by general image similarity, not specifically
+faces.
+
+**Free API key setup (no cost, no credit card required):**
+1. Go to https://serpapi.com/users/sign_up and create a free account (email only — no card required for the free plan, but double-check at signup since terms can change).
+2. Free plan gives **250 searches/month forever** — a hackathon demo (a handful of calls) stays well inside that.
+3. Get your key at https://serpapi.com/manage-api-key
+4. Run:
+   ```bash
+   cd src
+   python pipeline_web.py ../demo/query/query_face.jpg YOUR_SERPAPI_KEY ../demo/chain.json
+   ```
+
+Notes:
+- Your query photo is **uploaded directly** through SerpApi's Image API — you don't need to host it publicly anywhere first.
+- Max upload size is **500 KB**; if your photo is larger, compress/resize it first (e.g. `Image.open(...).save(..., quality=80)` or any online compressor).
+- Google Lens matches by general visual similarity (objects, scenes, faces all count) — that's why step 3 in the pipeline re-checks every result specifically for a matching *face* before anchoring anything.
+
+### Option B: offline / candidate-list mode — `pipeline.py`
+
+Uses a manually supplied list of candidate image paths/URLs instead of a
+live search — good for fully offline testing or if you don't want to set
+up any API key. See the original walkthrough below.
+
+---
 
 ```bash
 git clone <this-repo>
@@ -119,16 +150,19 @@ pip install -r requirements.txt
 
 ```
 src/
-  face_encode.py       # detection + LBP encoding
-  candidate_search.py  # downloads + scores candidate posts
-  blockchain.py         # local hash-chain implementation
-  anchor.py             # hashes + writes a match to the chain
-  verify.py             # re-hashes + checks against the chain
-  pipeline.py           # orchestrates the full run
-  tamper_demo.py        # demonstrates tamper detection
-  onchain_testnet.py    # optional Polygon Amoy alternative
+  face_encode.py         # detection + LBP encoding
+  web_reverse_search.py  # REAL live reverse-image search (SerpApi Google Lens)
+  pipeline_web.py         # end-to-end run using live web search (recommended)
+  candidate_search.py    # offline candidate-list search (Option B)
+  pipeline.py             # end-to-end run using candidate list (Option B)
+  blockchain.py           # local hash-chain implementation
+  anchor.py               # hashes + writes a match to the chain
+  verify.py               # re-hashes + checks against the chain
+  tamper_demo.py          # demonstrates tamper detection
+  onchain_testnet.py      # optional Polygon Amoy alternative to local chain
 demo/
-  query/                # put your query photo here
+  query/                  # put your query photo here
+  candidates/             # sample images for offline mode
   candidates.example.txt
 requirements.txt
 ```
