@@ -1,0 +1,4 @@
+# One candidate image URL per line, optional ", note" after a comma.
+# These should come from an account/source the subject has disclosed.
+https://raw.githubusercontent.com/opencv/opencv/master/samples/data/messi5.jpg, unrelated face - should NOT match
+https://raw.githubusercontent.com/opencv/opencv/master/samples/data/lena.jpg, same person as query - should MATCH
