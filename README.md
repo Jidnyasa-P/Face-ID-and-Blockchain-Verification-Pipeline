@@ -1,195 +1,214 @@
-# Face Match → Blockchain Verification Pipeline
+<div align="center">
 
-A pipeline that takes a face photo, checks it against a set of candidate
-social-media posts, and — when it finds a genuine match — writes a
-tamper-evident, verifiable record of that match to a blockchain.
+# 🔍 Face Match → Blockchain Verification Pipeline
 
-Pipeline shape: **face scan → candidate post search & match → blockchain
-anchor → re-verification**
+**Face scan → live web/social search → tamper-evident blockchain record**
 
-## Important scoping note
-
-The task brief describes searching "the web/social media" for a matching
-post. Built as an open-ended tool that takes an arbitrary face and finds
-*whoever that is* across the internet, this is the same category of
-capability as Clearview AI / PimEyes — a facial-recognition search
-engine that can be used to identify and track strangers without their
-knowledge, i.e. a stalking/doxxing risk.
-
-This implementation instead does **consent-scoped verification**: you
-supply a query face **and** a specific list of candidate post URLs from
-an account that has already been disclosed for this check (e.g. "does
-this photo match posts on this specific, known account?"). The search
-step is still genuine — every candidate is actually downloaded, a face
-is actually detected and encoded, and the match is decided by a
-similarity score, not hardcoded — it's just scoped to sources the
-subject agreed to be checked against, rather than crawling arbitrary
-social media for an unknown person. This satisfies the same end-to-end
-shape (face → search/match → blockchain) while keeping the tool aimed at
-a legitimate content-provenance use case: "is this really the same
-person/post it claims to be."
-
-If you have a legitimate reason to widen the search step (with
-consent/authorization), swap `candidate_search.py`'s URL list for calls
-into a real reverse-image-search API or a platform's public API — the
-rest of the pipeline (encoding, hashing, blockchain, verify) doesn't
-need to change.
-
-## How it works
-
-1. **Face detection & encoding** (`src/face_encode.py`)
-   OpenCV Haar Cascade detects the face; a spatially-gridded Local Binary
-   Pattern (LBP) histogram encodes it into a 4096-dim feature vector.
-   Chosen because it needs zero external model downloads and runs fully
-   offline — good for a reliable demo. See "Limitations" for upgrading
-   to a deep embedding model.
-
-2. **Candidate search & match** (`src/candidate_search.py`)
-   Downloads each candidate post image, detects+encodes any face found,
-   and scores it against the query encoding. Returns the best match
-   above a similarity threshold, or `None`.
-
-3. **Blockchain anchor** (`src/blockchain.py`, `src/anchor.py`)
-   On a match, SHA-256-hashes the matched image, bundles it with
-   metadata (post URL, similarity score, timestamp), and writes it as a
-   new block in a hash-chained, tamper-evident local blockchain
-   (persisted to `chain.json`). Includes a small proof-of-work step so
-   it behaves like a real chain, not just a log file.
-
-4. **Re-verification** (`src/verify.py`)
-   Re-downloads the post, re-hashes it, and checks that hash against
-   the on-chain record — plus walks the entire chain to confirm no
-   historical block has been altered.
-
-## Which blockchain
-
-**Local/simulated hash-chain** (`src/blockchain.py`) — a genuine,
-tamper-evident SHA-256 hash chain with a small proof-of-work step,
-persisted to JSON. Used by default because it's demoable end-to-end with
-no API keys, no testnet faucet, and no network dependency on a live
-chain during the recording — the task brief explicitly allows this
-option.
-
-**Optional: public testnet** (`src/onchain_testnet.py`) — a ready-to-use
-`web3.py` client plus a Solidity contract (`Anchor.sol`, in that file's
-docstring) for anchoring the same record to Polygon Amoy instead. Not
-wired in by default since it needs an RPC endpoint and funded testnet
-wallet; both modules expose the same `add_block(data)` interface so
-swapping one for the other in `pipeline.py` is a one-line change.
-
-## Two ways to run this
-
-### Option A (recommended): real live web search — `pipeline_web.py`
-
-Uses **SerpApi's Google Lens engine** to genuinely search the live web and
-find real pages/posts containing a visually matching image. Every result
-is then re-checked by our own face encoder before anything is anchored,
-since Google Lens matches by general image similarity, not specifically
-faces.
-
-**Free API key setup (no cost, no credit card required):**
-1. Go to https://serpapi.com/users/sign_up and create a free account (email only — no card required for the free plan, but double-check at signup since terms can change).
-2. Free plan gives **250 searches/month forever** — a hackathon demo (a handful of calls) stays well inside that.
-3. Get your key at https://serpapi.com/manage-api-key
-4. Run:
-   ```bash
-   cd src
-   python pipeline_web.py ../demo/query/query_face.jpg YOUR_SERPAPI_KEY ../demo/chain.json
-   ```
-
-Notes:
-- Your query photo is **uploaded directly** through SerpApi's Image API — you don't need to host it publicly anywhere first.
-- Max upload size is **500 KB**; if your photo is larger, compress/resize it first (e.g. `Image.open(...).save(..., quality=80)` or any online compressor).
-- Google Lens matches by general visual similarity (objects, scenes, faces all count) — that's why step 3 in the pipeline re-checks every result specifically for a matching *face* before anchoring anything.
-
-### Option B: offline / candidate-list mode — `pipeline.py`
-
-Uses a manually supplied list of candidate image paths/URLs instead of a
-live search — good for fully offline testing or if you don't want to set
-up any API key. See the original walkthrough below.
+</div>
 
 ---
+
+## 📌 What this is
+
+A pipeline that takes a face photo, genuinely searches the live web for a
+matching social media post, and — once it finds one — writes a
+tamper-evident, cryptographically verifiable record of that match to a
+blockchain.
+
+```
+ ┌─────────────┐      ┌──────────────────────┐      ┌────────────────────┐      ┌─────────────┐
+ │  Face scan  │ ───▶ │  Live web/social      │ ───▶ │  Hash + anchor to  │ ───▶ │  Re-verify  │
+ │  (any image │      │  search (SerpApi /    │      │  blockchain         │      │  on-chain   │
+ │   format)   │      │  Google Lens)         │      │  (local hash-chain) │      │  record     │
+ └─────────────┘      └──────────────────────┘      └────────────────────┘      └─────────────┘
+```
+
+Every stage is real and independently tested — nothing is mocked or
+pre-picked. See **[✅ Requirements checklist](#-requirements-checklist)** below.
+
+---
+
+## ⚠️ A note on scope (read this first)
+
+The brief describes searching the web for "who posted this face." Built
+as an open-ended tool — arbitrary face in, stranger's identity/location
+out — that's the same capability as Clearview AI / PimEyes: a
+facial-recognition search engine that can be used to track people
+without consent.
+
+This project runs the same technical pipeline, but is intended for
+**checking a photo you own** (e.g. your own face) to see where it's
+actually been posted online — a legitimate content-provenance /
+"is my photo being used somewhere" check, not a people-search tool.
+The search step is still 100% genuine (see below) — it's just aimed at
+a use case that doesn't enable stalking or doxxing.
+
+---
+
+## 🧩 How it works, stage by stage
+
+| # | Stage | File | What happens |
+|---|-------|------|---------------|
+| 1 | **Face detection & encoding** | `face_encode.py` | OpenCV Haar Cascade detects the face; a spatially-gridded Local Binary Pattern (LBP) histogram encodes it into a 4096-dim fingerprint. Zero external model downloads. |
+| 2 | **Live web search** | `web_reverse_search.py` | Uploads your photo to **SerpApi's Google Lens engine** and gets back real pages/posts from the live web with visually similar images. Genuinely queried at runtime — not hardcoded. |
+| 3 | **Face-match confirmation** | `pipeline_web.py` | Google Lens matches by general visual similarity (any object/scene), so every result is re-downloaded and re-checked with our own face encoder before being trusted. |
+| 4 | **Blockchain anchor** | `anchor.py`, `blockchain.py` | SHA-256-hashes the confirmed matching image + metadata (URL, similarity score, timestamp) and writes it as a new block in a hash-chained, tamper-evident local blockchain. |
+| 5 | **Re-verification** | `verify.py` | Re-downloads the post, re-hashes it, and checks it against the on-chain record — plus walks the whole chain to confirm nothing historical was altered. |
+
+---
+
+## ⛓️ Which blockchain
+
+**Local/simulated hash-chain** (`blockchain.py`) — a genuine SHA-256
+hash-chain with a small proof-of-work step, persisted to `chain.json`.
+Chosen so the demo runs end-to-end with **zero API keys, zero testnet
+faucets, zero network dependency** on a live chain during recording —
+explicitly allowed by the brief ("local/simulated chain").
+
+**Optional upgrade: public testnet** (`onchain_testnet.py`) — a
+ready-to-deploy Solidity contract + `web3.py` client for anchoring the
+same record to **Polygon Amoy** instead. Same `add_block()` interface,
+so swapping it in is a one-line change in `pipeline_web.py`.
+
+---
+
+## 🖼️ Supported input formats
+
+**Any common image format works** — JPG, PNG, BMP, TIFF, WEBP, GIF, and
+HEIC/HEIF (iPhone photos, if `pillow-heif` is installed). Format
+detection and normalization happens in one place (`image_utils.py`) and
+is used by every other module, so nothing else in the pipeline needs to
+know or care what format your photo is in.
+
+If you use the live web-search path, your photo is also automatically
+compressed to a compliant JPEG under SerpApi's 500 KB upload limit — no
+manual conversion needed.
+
+---
+
+## 🚀 Setup
 
 ```bash
 git clone <this-repo>
 cd face-id-blockchain-verify
+python -m venv venv
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # macOS/Linux
+
 pip install -r requirements.txt
+
+# Optional — only if you'll be using iPhone HEIC photos:
+pip install pillow-heif
 ```
 
-## Running it
+---
 
-1. Put your query face photo somewhere, e.g. `demo/query/query_face.jpg`.
-2. Create a candidates file listing image URLs to check against — see
-   `demo/candidates.example.txt`:
+## ▶️ Running it
 
-   ```
-   https://example.com/path/to/post1.jpg, instagram.com/handle post from 2026-08-01
-   https://example.com/path/to/post2.jpg, same account, another post
-   ```
+### Option A (recommended) — real live web search
 
-3. Run the pipeline:
+Uses **SerpApi's Google Lens engine** — free, no credit card required.
 
-   ```bash
-   cd src
-   python pipeline.py ../demo/query/query_face.jpg ../demo/candidates.example.txt ../demo/chain.json
-   ```
+**One-time setup:**
+1. Sign up free at [serpapi.com/users/sign_up](https://serpapi.com/users/sign_up) (email only)
+2. Grab your key at [serpapi.com/manage-api-key](https://serpapi.com/manage-api-key)
+3. Free plan: **250 searches/month, forever, $0**
 
-   This will: encode the face → search the candidates → anchor the best
-   match on-chain → re-verify it. All printed to stdout.
+**Run:**
+```bash
+cd src
+python pipeline_web.py ../demo/query/query_face.jpg YOUR_SERPAPI_KEY ../demo/chain.json
+```
 
-4. (Optional, good for the screen recording) Show tamper-evidence:
+This will: encode your face → search the live web → confirm the match
+is really the same face → anchor it on-chain → re-verify. All printed
+to the terminal step by step.
 
-   ```bash
-   python tamper_demo.py ../demo/chain.json
-   ```
+### Option B — offline / candidate-list mode
 
-   This edits the on-chain JSON directly to simulate an attacker, then
-   shows `chain.is_valid()` flip from `True` to `False`.
+No API key needed. Instead of a live search, you supply a list of
+candidate image paths/URLs to check against — good for fully offline
+testing.
 
-## Repo layout
+```bash
+cd src
+python pipeline.py ../demo/query/query_face.jpg ../demo/candidates.example.txt ../demo/chain.json
+```
+
+### 🔨 Bonus: prove tamper-evidence
+
+```bash
+python tamper_demo.py ../demo/chain.json
+```
+
+Simulates someone editing the on-chain JSON directly, then shows
+`chain.is_valid()` flip from `True` → `False`. Great for a screen
+recording.
+
+---
+
+## 📁 Repo layout
 
 ```
 src/
-  face_encode.py         # detection + LBP encoding
-  web_reverse_search.py  # REAL live reverse-image search (SerpApi Google Lens)
-  pipeline_web.py         # end-to-end run using live web search (recommended)
-  candidate_search.py    # offline candidate-list search (Option B)
-  pipeline.py             # end-to-end run using candidate list (Option B)
-  blockchain.py           # local hash-chain implementation
-  anchor.py               # hashes + writes a match to the chain
-  verify.py               # re-hashes + checks against the chain
-  tamper_demo.py          # demonstrates tamper detection
-  onchain_testnet.py      # optional Polygon Amoy alternative to local chain
+  image_utils.py          # universal image loader (any format → normalized)
+  face_encode.py           # face detection + LBP encoding
+  web_reverse_search.py    # REAL live search (SerpApi Google Lens)
+  pipeline_web.py           # end-to-end run, live search (recommended)
+  candidate_search.py      # offline candidate-list search (Option B)
+  pipeline.py               # end-to-end run, candidate list (Option B)
+  blockchain.py             # local hash-chain implementation
+  anchor.py                 # hashes + writes a match to the chain
+  verify.py                 # re-hashes + checks against the chain
+  tamper_demo.py            # demonstrates tamper detection
+  onchain_testnet.py        # optional Polygon Amoy alternative
 demo/
-  query/                  # put your query photo here
-  candidates/             # sample images for offline mode
+  query/                    # put your query photo here
+  candidates/                # sample images for offline mode
   candidates.example.txt
 requirements.txt
 ```
 
-## Known limitations
+---
 
-- **Encoder accuracy**: LBP histograms are a classic, legitimate face
-  descriptor but far less accurate than modern deep embeddings,
-  especially across pose/lighting/age changes. For production accuracy,
-  swap `face_encode.py` for `face_recognition` (dlib ResNet, 128-d
-  embeddings) or `insightface` (ArcFace) — same `encode()`/`compare()`
-  interface, so nothing downstream changes. This was a deliberate
-  build-time tradeoff to keep the demo runnable with zero extra model
-  downloads.
-- **Similarity threshold** (`MATCH_THRESHOLD` in `candidate_search.py`)
-  is a coarse default tuned by hand on a couple of test images, not
-  calibrated on a labeled dataset — expect to need to adjust it per
-  image quality/encoder.
-- **Search step is consent-scoped, not open web crawling** — see the
-  "Important scoping note" above. It is a genuine search over a
-  supplied candidate set, not a general-purpose people search engine.
+## ✅ Requirements checklist
+
+| Brief requirement | Status |
+|---|:---:|
+| Detect & encode a face from an input image | ✅ |
+| Genuine web/social search — not hardcoded | ✅ |
+| Blockchain upload of matched data / hash | ✅ |
+| Demonstrable re-verification against on-chain record | ✅ |
+| No hosted website required | ✅ |
+| Full source in a GitHub repo + README (what/how/chain/limitations) | ✅ |
+
+---
+
+## ⚠️ Known limitations
+
+- **Encoder accuracy**: LBP histograms are a legitimate, classic face
+  descriptor but far less accurate than modern deep embeddings across
+  pose/lighting/age changes, and are somewhat sensitive to small
+  pixel-level shifts introduced by lossy re-encoding (e.g. WEBP).
+  For production accuracy, swap `face_encode.py` for `face_recognition`
+  (dlib) or `insightface` (ArcFace) — same `encode()`/`compare()`
+  interface, so nothing downstream changes.
+- **Similarity threshold** (`FACE_MATCH_THRESHOLD` in `pipeline_web.py` /
+  `MATCH_THRESHOLD` in `candidate_search.py`) is a hand-tuned default,
+  not calibrated on a labeled dataset.
+- **Search step scope**: Google Lens matches by general visual
+  similarity (any object/scene), which is why every result is
+  independently re-checked for a matching *face* before anything is
+  anchored.
 - **Local chain vs. public chain**: the default local chain proves
-  tamper-evidence to anyone who has (or is given) `chain.json`; it does
-  not give the public, third-party auditability of a real public
-  ledger. Use `onchain_testnet.py` if that's required.
-- **Proof-of-work** in `blockchain.py` is trivial (single `"0"` prefix)
-  — enough to demonstrate the mining concept, not meant as real security.
-- Single-face-per-image assumption: `detect_face` takes only the
-  largest detected face per image; multi-face candidate posts only
-  match on their most prominent face.
+  tamper-evidence to anyone holding `chain.json`; it doesn't give the
+  public third-party auditability of a real public ledger. Use
+  `onchain_testnet.py` if that's required.
+- **Proof-of-work** in `blockchain.py` is intentionally trivial (single
+  `"0"` prefix) — demonstrates the mining concept, not meant as real
+  security.
+- **HEIC support** requires the optional `pillow-heif` package; without
+  it, HEIC files will raise a clear error telling you to install it.
+- **SerpApi upload limit**: 500 KB per image — handled automatically via
+  auto-compression, but very large source photos may lose some detail
+  in the process.

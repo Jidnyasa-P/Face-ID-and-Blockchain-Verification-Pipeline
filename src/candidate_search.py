@@ -33,6 +33,7 @@ import cv2
 import numpy as np
 
 from face_encode import NoFaceFoundError, detect_face, encode_face, compare
+from image_utils import read_image_any_format
 
 MATCH_THRESHOLD = 0.35  # tune based on your encoder; LBP is coarse-grained
 
@@ -51,10 +52,11 @@ class MatchResult:
 
 
 def _load_image(source: str):
-    """Load an image either from a local file path or an http(s) URL.
-    A local path lets you run the whole pipeline offline with images you
-    already have (e.g. saved/downloaded posts) instead of needing live
-    URLs during a demo."""
+    """Load an image either from a local file path or an http(s) URL, in
+    essentially any common format (JPG/PNG/BMP/TIFF/WEBP/HEIC/...) — see
+    image_utils.read_image_any_format. A local path lets you run the
+    whole pipeline offline with images you already have (e.g. saved/
+    downloaded posts) instead of needing live URLs during a demo."""
     if source.startswith("http://") or source.startswith("https://"):
         req = urllib.request.Request(source, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=15) as resp:
@@ -63,10 +65,7 @@ def _load_image(source: str):
         with open(source, "rb") as f:
             raw = f.read()
 
-    arr = np.frombuffer(raw, dtype=np.uint8)
-    img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-    if img is None:
-        raise ValueError(f"Could not decode image from {source}")
+    img = read_image_any_format(raw)
     return img, raw
 
 

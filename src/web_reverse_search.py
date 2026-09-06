@@ -35,6 +35,8 @@ import requests
 from dataclasses import dataclass
 from typing import List
 
+from image_utils import compress_for_upload
+
 SERPAPI_IMAGE_UPLOAD_URL = "https://serpapi.com/image"
 SERPAPI_SEARCH_URL = "https://serpapi.com/search"
 
@@ -49,15 +51,17 @@ class WebMatch:
 
 def _upload_image(image_path: str, api_key: str) -> str:
     """Upload a local image to SerpApi's Image API and return its image_id.
-    Max file size is 500 KB per SerpApi's docs — if your photo is larger,
-    downscale/compress it first."""
-    with open(image_path, "rb") as f:
-        resp = requests.post(
-            SERPAPI_IMAGE_UPLOAD_URL,
-            files={"image": f},
-            data={"api_key": api_key},
-            timeout=30,
-        )
+    Accepts ANY input format (JPG/PNG/HEIC/etc — see image_utils) and
+    always converts it to a compliant JPEG under SerpApi's 500 KB limit
+    before sending, so you never have to manually convert or compress
+    your photo first."""
+    jpeg_bytes = compress_for_upload(image_path, max_bytes=480_000)
+    resp = requests.post(
+        SERPAPI_IMAGE_UPLOAD_URL,
+        files={"image": ("query.jpg", jpeg_bytes, "image/jpeg")},
+        data={"api_key": api_key},
+        timeout=30,
+    )
     resp.raise_for_status()
     data = resp.json()
     if "image_id" not in data:

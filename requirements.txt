@@ -1,7 +1,11 @@
 opencv-python>=4.8
 numpy>=1.24
 requests>=2.28
+Pillow>=10.0
 
-# Optional, only needed if you switch to the public-testnet anchoring
+# Optional — only needed for iPhone HEIC/HEIF photo support:
+# pillow-heif>=0.15
+
+# Optional — only needed if you switch to the public-testnet anchoring
 # path in src/onchain_testnet.py:
 # web3>=6.0

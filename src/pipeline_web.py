@@ -24,9 +24,9 @@ from web_reverse_search import reverse_image_search
 from blockchain import SimpleChain
 from anchor import anchor_match
 from verify import verify_block, fetch_bytes
+from image_utils import read_image_any_format
 
-import cv2
-import numpy as np
+import urllib.request
 
 FACE_MATCH_THRESHOLD = 0.35
 
@@ -55,10 +55,7 @@ def run_pipeline(query_path: str, api_key: str, chain_path: str = "chain.json"):
             continue
         try:
             raw = _download(m.matching_image_url)
-            arr = np.frombuffer(raw, dtype=np.uint8)
-            img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-            if img is None:
-                raise ValueError("could not decode image")
+            img = read_image_any_format(raw)
             face = detect_face(img)
             enc = encode_face(face)
             sim = compare(query_encoding, enc)

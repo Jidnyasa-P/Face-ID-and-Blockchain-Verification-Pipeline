@@ -1,57 +1,42 @@
 [
   {
     "index": 0,
-    "timestamp": 1788693961.4957242,
+    "timestamp": 1788716766.6044874,
     "data": {
       "note": "genesis block"
     },
     "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
     "nonce": 0,
-    "hash": "5748006f23bb768d9bc861eba52da09d924ef87cacdc12abc58c49819d4ca179"
+    "hash": "452ab2adf0ceeabbeb7b9b58f2a630b7e58aa2b05ea75307d132a55784377446"
   },
   {
     "index": 1,
-    "timestamp": 1788693961.4961674,
+    "timestamp": 1788717007.5700502,
     "data": {
       "type": "face_match_verification",
-      "post_url": "../demo/candidates/candidate2.jpg",
-      "image_sha256": "7de7ed51a1594fff247f4cae2301eceacf5313d6011e37b4a4c8733f7bb72c07",
-      "similarity_score": 1.0,
+      "post_url": "https://the.me/the-story-of-lena/",
+      "image_sha256": "daa833d11171983be7a871d48d1225b33f8c80bb010a2ffbe8eb30727bb535c8",
+      "similarity_score": 0.4576,
       "query_image": "../demo/query/query_face.jpg",
-      "anchored_at": 1788693961.4961646
+      "anchored_at": 1788717007.5700467
     },
-    "previous_hash": "5748006f23bb768d9bc861eba52da09d924ef87cacdc12abc58c49819d4ca179",
-    "nonce": 0,
-    "hash": "0ea035c032c12476981748ec13b46d0594ce0e01691695979ab24125f4c0dec7"
+    "previous_hash": "452ab2adf0ceeabbeb7b9b58f2a630b7e58aa2b05ea75307d132a55784377446",
+    "nonce": 1,
+    "hash": "08c81ac1d05c7d3fbf4a99dbb48c2d43f2bcf3d73718197e2e5c76107b69aaee"
   },
   {
     "index": 2,
-    "timestamp": 1788696321.0108745,
+    "timestamp": 1788717180.690199,
     "data": {
       "type": "face_match_verification",
-      "post_url": "https://www.wired.com/story/finding-lena-the-patron-saint-of-jpegs/",
-      "image_sha256": "f1ccce1976c5b2f8c2f6453fcbf3ce5f9774e4bae3e5ba840709edd0f26f7070",
-      "similarity_score": 0.4433,
+      "post_url": "https://x.com/CalebPongratz10/status/2075008727342624826",
+      "image_sha256": "7a5c03188f95ceb3fc4c6cedde99d7488a0136b8e3cc92aa8d485ba9a763c275",
+      "similarity_score": 0.4708,
       "query_image": "../demo/query/query_face.jpg",
-      "anchored_at": 1788696321.010865
+      "anchored_at": 1788717180.6901963
     },
-    "previous_hash": "0ea035c032c12476981748ec13b46d0594ce0e01691695979ab24125f4c0dec7",
-    "nonce": 5,
-    "hash": "0fe8263b4b6d7d831ff1c68460394d4aa1eb42c480e7aa047c81bc6e9e3306a1"
-  },
-  {
-    "index": 3,
-    "timestamp": 1788696527.8197024,
-    "data": {
-      "type": "face_match_verification",
-      "post_url": "https://in.pinterest.com/hrfckolkata/hrithik-roshan-latest-photos/",
-      "image_sha256": "a766ce78dcbdd031994c3263df88b47bef1030f555d485748727deb9abda35c1",
-      "similarity_score": 1.0,
-      "query_image": "../demo/query/query_face.jpg",
-      "anchored_at": 1788696527.8196971
-    },
-    "previous_hash": "0fe8263b4b6d7d831ff1c68460394d4aa1eb42c480e7aa047c81bc6e9e3306a1",
-    "nonce": 14,
-    "hash": "0f73c426b045b9c3cd587ea05b69eaa694cc888e57e681dc53a628711fd7ebd8"
+    "previous_hash": "08c81ac1d05c7d3fbf4a99dbb48c2d43f2bcf3d73718197e2e5c76107b69aaee",
+    "nonce": 1,
+    "hash": "011b2c3d64f74ccfbb91807f4316773f5fabf586de169e7a08d8548953a62b63"
   }
 ]

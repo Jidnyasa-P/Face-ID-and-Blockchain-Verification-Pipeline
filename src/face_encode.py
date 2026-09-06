@@ -21,6 +21,8 @@ compare() interface below.
 import cv2
 import numpy as np
 
+from image_utils import read_image_any_format
+
 _CASCADE_PATH = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
 _face_detector = cv2.CascadeClassifier(_CASCADE_PATH)
 
@@ -87,9 +89,7 @@ def encode_face(gray_face: np.ndarray) -> np.ndarray:
 
 
 def encode_from_path(path: str) -> np.ndarray:
-    img = cv2.imread(path)
-    if img is None:
-        raise FileNotFoundError(f"Could not read image: {path}")
+    img = read_image_any_format(path)
     face = detect_face(img)
     return encode_face(face)
 
