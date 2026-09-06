@@ -38,5 +38,20 @@
     "previous_hash": "0ea035c032c12476981748ec13b46d0594ce0e01691695979ab24125f4c0dec7",
     "nonce": 5,
     "hash": "0fe8263b4b6d7d831ff1c68460394d4aa1eb42c480e7aa047c81bc6e9e3306a1"
+  },
+  {
+    "index": 3,
+    "timestamp": 1788696527.8197024,
+    "data": {
+      "type": "face_match_verification",
+      "post_url": "https://in.pinterest.com/hrfckolkata/hrithik-roshan-latest-photos/",
+      "image_sha256": "a766ce78dcbdd031994c3263df88b47bef1030f555d485748727deb9abda35c1",
+      "similarity_score": 1.0,
+      "query_image": "../demo/query/query_face.jpg",
+      "anchored_at": 1788696527.8196971
+    },
+    "previous_hash": "0fe8263b4b6d7d831ff1c68460394d4aa1eb42c480e7aa047c81bc6e9e3306a1",
+    "nonce": 14,
+    "hash": "0f73c426b045b9c3cd587ea05b69eaa694cc888e57e681dc53a628711fd7ebd8"
   }
 ]
